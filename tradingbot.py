@@ -18,12 +18,19 @@ ALPACA_CREDS = {
 }
 
 class MLTrader(Strategy):
-    def initialize(self, symbol:str="SPY"):
+    def initialize(self, symbol:str="SPY", cash_at_risk:float=0.5):
         self.symbol = symbol
         self.sleeptime = "24H" 
         self.last_trade = None 
-        # self.cash_at_risk = cash_at_risk
+        self.cash_at_risk = cash_at_risk
         # self.api = REST(base_url=BASE_URL, key_id=API_KEY, secret_key=API_SECRET)
+    
+    def position_sizing(self): 
+        cash = self.get_cash() 
+        last_price = self.get_last_price(self.symbol)
+        quantity = round(cash * self.cash_at_risk / last_price,0)
+        return cash, last_price, quantity
+
     def on_trading_iteration(self):
         if self.last_trade == None:
             order = self.create_order(
@@ -34,7 +41,7 @@ class MLTrader(Strategy):
             )
             self.submit_order(order)
             self.last_trade = "buy"
-
+    
 start_date = datetime(2020, 1, 1)
 end_date = datetime(2023, 12, 31)
 
@@ -45,5 +52,5 @@ strategy.backtest(
     YahooDataBacktesting,
     start_date,
     end_date,
-    parameters ={"symbol": "SPY"}
+    parameters ={"symbol": "SPY", "cash_at_risk":"0.5"}
 )
